@@ -21,7 +21,7 @@ namespace SmartPower.Data.Tables
 
         [ForeignKey("JobOrder")]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int JobOrderId { get; set; }
+        public string JobOrderId { get; set; }
         public JobOrder JobOrder { get; set; }
 
     }

@@ -26,7 +26,7 @@ namespace SmartPower.Controllers
             this.DB = dataContext;
         }
 
-        public int getJob(string mc)
+        public string getJob(string mc)
         {
             //first check to see if this machine is cached
             //then check to see if it has any available unconsumed jobOrders
@@ -63,8 +63,9 @@ namespace SmartPower.Controllers
                 accessToken: "w489dkfn934809048293i09e22i03",
                 status: "Recieved"
                 }*/
-                dynamic ResponseInJSON = JsonConvert.DeserializeObject(response);
-                List<string> jobOrders = ResponseInJSON.jobOrders;
+                ERPresponse ResponseInJSON = JsonConvert.DeserializeObject<ERPresponse>(response);
+                List<string> jobOrders = ResponseInJSON.JobOrdersValues;
+
                 Machine m1 = new Machine()
                 {
                     MachineCode = mc
@@ -73,7 +74,7 @@ namespace SmartPower.Controllers
                 {
                     m1.jobOrders.Add(new JobOrder {
                         MachineCode = mc,
-                        JobOrderId = int.Parse(j),
+                        JobOrderId = j,
                         TotalLength = 0,
                         StartDate = DateTime.Now,
                         Consumed = false 
@@ -88,7 +89,7 @@ namespace SmartPower.Controllers
         }
 
 
-        public JobOrder GetJobOrderFromEncoder(int id)
+        public JobOrder GetJobOrderFromEncoder(string id)
         {
             var model = DB.jobOrders.FirstOrDefault(j => j.JobOrderId == id);
 
@@ -172,7 +173,7 @@ namespace SmartPower.Controllers
             return View(model);
         }
 
-        public void AddJobOrder(int jobId, string mc)
+        public void AddJobOrder(string jobId, string mc)
         {
             JobOrder jobOrder = new JobOrder()
             {
@@ -190,7 +191,7 @@ namespace SmartPower.Controllers
 
         }
 
-        public void UpdateJobOrder(int jobId, decimal length)
+        public void UpdateJobOrder(string jobId, decimal length)
         {
             JobOrder jobOrder = DB.jobOrders.FirstOrDefault(j => j.JobOrderId == jobId);
             jobOrder.EndDate = DateTime.Now;

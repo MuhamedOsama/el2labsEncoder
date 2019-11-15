@@ -11,7 +11,7 @@ namespace SmartPower.Data.Tables
     {
         [Key]
         public int Id { get; set; }
-        public int JobOrderId { get; set; }
+        public string JobOrderId { get; set; }
         public DateTime StartDate { get; set; }
         public Nullable<DateTime> EndDate { get; set; }
 
