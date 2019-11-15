@@ -1,0 +1,8 @@
+﻿.highcharts-yaxis-grid .highcharts-grid-line {
+    display: none;
+}
+
+
+.nav-list > ul > li >a {
+     background-color:red
+}
