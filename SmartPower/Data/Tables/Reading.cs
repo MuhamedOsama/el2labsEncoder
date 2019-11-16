@@ -18,11 +18,7 @@ namespace SmartPower.Data.Tables
         public decimal Length { get; set; }
         public int status { get; set; }
         public DateTime time { get; set; }
-
-        [ForeignKey("JobOrder")]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public string JobOrderId { get; set; }
-        public JobOrder JobOrder { get; set; }
+        public ICollection<JobOrder> jobOrders { get; set; }
 
     }
 }

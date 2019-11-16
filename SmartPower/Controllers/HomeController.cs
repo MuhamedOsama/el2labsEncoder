@@ -26,29 +26,12 @@ namespace SmartPower.Controllers
             this.DB = dataContext;
         }
 
-        public string getJob(string mc)
+        public ICollection<string> getJob(string mc)
         {
-            //first check to see if this machine is cached
-            //then check to see if it has any available unconsumed jobOrders
-            //if found job order that is unconsumed it returns it
             
-            Machine machine = DB.machines.FirstOrDefault(m => m.MachineCode == mc);
-            if (machine!=null && machine.jobOrders.Any((j => j.Consumed==false)))
-            {
-                JobOrder job = machine.jobOrders.FirstOrDefault(j => !j.Consumed);
-                job.Consumed = true;
-                DB.SaveChanges();
-                return job.JobOrderId;
-            }
-            //else
-            //cache the machine in the machines table
-            //request list of job orders
-            //asigns it to the machine
-            //returns one of them
 
-            else
-            {
-                //get list of job orders from erp
+            
+                //get list of job orders from erp for that machine
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get,
                "https://localhost:44368/api/encoderlogs/Response");
@@ -64,43 +47,23 @@ namespace SmartPower.Controllers
                 status: "Recieved"
                 }*/
                 ERPresponse ResponseInJSON = JsonConvert.DeserializeObject<ERPresponse>(response);
-                List<string> jobOrders = ResponseInJSON.JobOrdersValues;
-
-                Machine m1 = new Machine()
-                {
-                    MachineCode = mc
-                };
-                jobOrders.ForEach((j) =>
-                {
-                    m1.jobOrders.Add(new JobOrder {
-                        MachineCode = mc,
-                        JobOrderId = j,
-                        TotalLength = 0,
-                        StartDate = DateTime.Now,
-                        Consumed = false 
-                    });
-                });
-                JobOrder job = m1.jobOrders.FirstOrDefault(j => j.Consumed==false);
-                job.Consumed = true;
-                DB.SaveChanges();
-                client.Dispose();
-                return job.JobOrderId;
-            }
+            client.Dispose();
+            return ResponseInJSON.jobOrders;
+            
         }
 
 
-        public JobOrder GetJobOrderFromEncoder(string id)
+        public ICollection<JobOrder> GetJobOrderFromEncoder(string id)
         {
-            var model = DB.jobOrders.FirstOrDefault(j => j.JobOrderId == id);
-
+            var model = DB.jobOrders.Where(m => m.MachineCode == id).ToList();
             return model;
         }
 
         public IActionResult Data()
         {
-
-            getJob("asdad");
-            var model = DB.Reading.Where(d => d.status != 2).OrderByDescending(d => d.Id).ToList();
+            //AddJobOrder(getJob("12"), "12");
+            var model = DB.Reading.Where(d => d.status != 2).Include(d=>d.jobOrders).OrderByDescending(d => d.Id).ToList();
+            //var jobs = DB.Reading.FirstOrDefault(r => r.MachineCode == "12").jobOrders.ToList();
             return View(model);
         }
 
@@ -128,27 +91,33 @@ namespace SmartPower.Controllers
             if (reading.Length == 0 && reading.status == 1)
             {
 
-                JobOrder jobOrder = GetJobOrderFromEncoder(getJob(Convert.ToString(values["pMC"].Value)));
+                var jobOrders = DB.jobOrders.Where(j => j.MachineCode == Convert.ToString(values["pMC"].Value)).ToList();
 
 
-                if (jobOrder != null)
+                if (jobOrders != null)
                 {
-                    reading.JobOrderId = jobOrder.JobOrderId;
+                    reading.jobOrders = jobOrders;
 
                 }
                 else
                 {
                     AddJobOrder(getJob(Convert.ToString(values["pMC"].Value)), Convert.ToString(values["pMC"].Value));
-                    reading.JobOrderId = getJob(Convert.ToString(values["pMC"].Value));
+                    reading.jobOrders = jobOrders;
                 }
             }
             else if (reading.Length != 0 && reading.status == 0)
             {
-                JobOrder jobOrder = GetJobOrderFromEncoder(getJob(Convert.ToString(values["pMC"].Value)));
+                var jobOrders = DB.jobOrders.Where(j => j.MachineCode == Convert.ToString(values["pMC"].Value));
 
-                reading.JobOrderId = getJob(Convert.ToString(values["pMC"].Value));
+                reading.jobOrders = jobOrders.ToList();
                 reading.status = 0;
-                UpdateJobOrder(jobOrder.JobOrderId, reading.Length);
+                jobOrders.ForEachAsync(j =>
+                {
+                    j.EndDate = DateTime.Now;
+                    j.TotalLength = reading.Length;
+                });
+                DB.jobOrders.UpdateRange(jobOrders);
+                DB.SaveChanges();
 
             }//else if(encoder.Length != 0 && encoder.status == 2)
              //{
@@ -173,32 +142,45 @@ namespace SmartPower.Controllers
             return View(model);
         }
 
-        public void AddJobOrder(string jobId, string mc)
+        //takes the list of job orders and assigns each one to the machine (machine code)
+        public void AddJobOrder(ICollection<string> Jobs, string mc)
         {
-            JobOrder jobOrder = new JobOrder()
+            var readings = DB.Reading.Where(r => r.MachineCode == mc).Include(r=>r.jobOrders);
+            var JobList = Jobs.ToList();
+            DateTime date = DateTime.Now;
+            Console.WriteLine("About to print JOBS before ADDING");
+            JobList.ForEach(async j =>
             {
-                JobOrderId = jobId,
-                StartDate = DateTime.Now,
-                EndDate = null,
-                MachineCode = mc,
-                TotalLength = 0,
+                Console.WriteLine("Adding this order: " + j);
+                JobOrder jobOrder = new JobOrder()
+                {
+                    
+                    JobOrderId = j,
+                    StartDate = date,
+                    EndDate = null,
+                    MachineCode = mc,
+                    TotalLength = 0,
+                };
+                await readings.ForEachAsync(r => r.jobOrders.Add(jobOrder));
+                await DB.jobOrders.AddAsync(jobOrder);
+                await DB.SaveChangesAsync();
+            });
 
-            };
-            DB.jobOrders.Add(jobOrder);
-            DB.SaveChanges();
-
+            //DB.jobOrders.AddRange(jobOrders);
+            //readings.ForEachAsync(r => r.jobOrders = jobOrders);
+            //DB.SaveChangesAsync();
 
 
         }
 
-        public void UpdateJobOrder(string jobId, decimal length)
-        {
-            JobOrder jobOrder = DB.jobOrders.FirstOrDefault(j => j.JobOrderId == jobId);
-            jobOrder.EndDate = DateTime.Now;
-            jobOrder.TotalLength = length;
-            DB.jobOrders.Update(jobOrder);
-            DB.SaveChanges();
-        }
+        //public void UpdateJobOrder(ICollection <JobOrder> orders, decimal length)
+        //{
+        //    JobOrder jobOrder = DB.jobOrders.FirstOrDefault(j => j.JobOrderId == jobId);
+        //    jobOrder.EndDate = DateTime.Now;
+        //    jobOrder.TotalLength = length;
+        //    DB.jobOrders.Update(jobOrder);
+        //    DB.SaveChanges();
+        //}
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

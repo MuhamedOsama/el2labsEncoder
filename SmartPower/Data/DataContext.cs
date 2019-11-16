@@ -16,7 +16,7 @@ namespace SmartPower.Data
 
         public DbSet<Reading> Reading { get; set; }
         public DbSet<JobOrder> jobOrders { get; set; }
-        public DbSet<Machine> machines { get; set; }
+        //public DbSet<Machine> machines { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.EnableSensitiveDataLogging();

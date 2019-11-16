@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SmartPower.Data;
 
 namespace SmartPower.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20191115190422_RemovedConsumedPropertyAndMachineTable")]
+    partial class RemovedConsumedPropertyAndMachineTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,11 +29,11 @@ namespace SmartPower.Migrations
 
                     b.Property<DateTime?>("EndDate");
 
+                    b.Property<int?>("JobOrder");
+
                     b.Property<string>("JobOrderId");
 
                     b.Property<string>("MachineCode");
-
-                    b.Property<int?>("ReadingId");
 
                     b.Property<DateTime>("StartDate");
 
@@ -39,7 +41,7 @@ namespace SmartPower.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReadingId");
+                    b.HasIndex("JobOrder");
 
                     b.ToTable("jobOrders");
                 });
@@ -67,7 +69,7 @@ namespace SmartPower.Migrations
                 {
                     b.HasOne("SmartPower.Data.Tables.Reading", "Reading")
                         .WithMany("jobOrders")
-                        .HasForeignKey("ReadingId");
+                        .HasForeignKey("JobOrder");
                 });
 #pragma warning restore 612, 618
         }

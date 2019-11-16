@@ -14,13 +14,9 @@ namespace SmartPower.Data.Tables
         public string JobOrderId { get; set; }
         public DateTime StartDate { get; set; }
         public Nullable<DateTime> EndDate { get; set; }
-
         public string MachineCode { get; set; }
-
         public decimal TotalLength { get; set; }
-
         public Reading Reading { get; set; }
-        public bool Consumed { get; set; }
 
     }
 }
