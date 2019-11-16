@@ -56,11 +56,11 @@
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>machine code</th>
+                                        <th>Machine Code</th>
                                         <th>Length</th>
-                                        <th>status</th>
+                                        <th>Status</th>
                                         <th>Time</th>
-                                        <th>job order</th>
+                                        <th>Job Order</th>
 
                                     </tr>
                                 </thead>
@@ -84,7 +84,8 @@
                                             }
                                             <td>@item.time</td>
                                             <th>
-                                                
+                                                @if (item.JobOrders.Count()!=0)
+                                                {
                                                     <div class="dropdown show">
                                                         <a  class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                             JobOrders
@@ -92,14 +93,13 @@
                                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
 
 
-                                                            @foreach (var j in item.jobOrders)
+                                                            @foreach (var j in item.JobOrders)
                                                             {
                                                                 <span class="dropdown-item" hr>@j.JobOrderId</span>
                                                             }
                                                         </div>
                                                     </div>
-                                                
-
+                                                }
                                             </th>
 
                                         </tr>

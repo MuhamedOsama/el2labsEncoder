@@ -62,7 +62,7 @@ namespace SmartPower.Controllers
         public IActionResult Data()
         {
             //AddJobOrder(getJob("12"), "12");
-            var model = DB.Reading.Where(d => d.status != 2).Include(d=>d.jobOrders).OrderByDescending(d => d.Id).ToList();
+            var model = DB.Reading.Where(d => d.status != 2).Include(d=>d.JobOrders).OrderByDescending(d => d.Id).ToList();
             //var jobs = DB.Reading.FirstOrDefault(r => r.MachineCode == "12").jobOrders.ToList();
             return View(model);
         }
@@ -73,10 +73,11 @@ namespace SmartPower.Controllers
             return View(model);
         }
 
-        public string Update()
+        public async System.Threading.Tasks.Task<string> Update()
         {
             var query = HttpContext.Request.Query;
             var values = query.Where(o => o.Key.StartsWith("p")).ToDictionary(o => o.Key);
+            Console.WriteLine("Recieved");
             Reading reading = new Reading()
             {
 
@@ -87,35 +88,38 @@ namespace SmartPower.Controllers
 
                 time = DateTime.Now,
             };
-
+            //machine starting 
             if (reading.Length == 0 && reading.status == 1)
             {
+                Console.WriteLine("Status is 1");
 
                 var jobOrders = DB.jobOrders.Where(j => j.MachineCode == Convert.ToString(values["pMC"].Value)).ToList();
 
-
-                if (jobOrders != null)
+                if (jobOrders.Any())
                 {
-                    reading.jobOrders = jobOrders;
-
+                    Console.WriteLine("job orders already exist");
+                    reading.JobOrders = jobOrders;
+                    DB.SaveChanges();
                 }
                 else
                 {
-                    AddJobOrder(getJob(Convert.ToString(values["pMC"].Value)), Convert.ToString(values["pMC"].Value));
-                    reading.jobOrders = jobOrders;
+                    Console.WriteLine("getting and adding job orders");
+                    AddJobOrder(getJob(Convert.ToString(values["pMC"].Value)),reading);
+                    reading.JobOrders = jobOrders;
                 }
             }
             else if (reading.Length != 0 && reading.status == 0)
             {
-                var jobOrders = DB.jobOrders.Where(j => j.MachineCode == Convert.ToString(values["pMC"].Value));
+                Console.WriteLine("Status is 0 complete");
+                var jobOrders = DB.jobOrders.Where(j => j.MachineCode == Convert.ToString(values["pMC"].Value) && j.TotalLength == 0);
 
-                reading.jobOrders = jobOrders.ToList();
                 reading.status = 0;
-                jobOrders.ForEachAsync(j =>
+                await jobOrders.ForEachAsync(j =>
                 {
                     j.EndDate = DateTime.Now;
                     j.TotalLength = reading.Length;
                 });
+                reading.JobOrders = jobOrders.ToList();
                 DB.jobOrders.UpdateRange(jobOrders);
                 DB.SaveChanges();
 
@@ -143,28 +147,25 @@ namespace SmartPower.Controllers
         }
 
         //takes the list of job orders and assigns each one to the machine (machine code)
-        public void AddJobOrder(ICollection<string> Jobs, string mc)
+        public void AddJobOrder(ICollection<string> Jobs, Reading reading)
         {
-            var readings = DB.Reading.Where(r => r.MachineCode == mc).Include(r=>r.jobOrders);
             var JobList = Jobs.ToList();
             DateTime date = DateTime.Now;
             Console.WriteLine("About to print JOBS before ADDING");
-            JobList.ForEach(async j =>
+            JobList.ForEach(j =>
             {
-                Console.WriteLine("Adding this order: " + j);
                 JobOrder jobOrder = new JobOrder()
                 {
-                    
+
                     JobOrderId = j,
                     StartDate = date,
                     EndDate = null,
-                    MachineCode = mc,
-                    TotalLength = 0,
+                    MachineCode = reading.MachineCode,
+                    TotalLength = 0
                 };
-                await readings.ForEachAsync(r => r.jobOrders.Add(jobOrder));
-                await DB.jobOrders.AddAsync(jobOrder);
-                await DB.SaveChangesAsync();
+                DB.jobOrders.Add(jobOrder);
             });
+            DB.SaveChanges();
 
             //DB.jobOrders.AddRange(jobOrders);
             //readings.ForEachAsync(r => r.jobOrders = jobOrders);

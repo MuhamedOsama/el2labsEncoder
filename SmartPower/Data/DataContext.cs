@@ -25,6 +25,9 @@ namespace SmartPower.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<JobOrder>()
+                .Property(p => p.ReadingId)
+                .ValueGeneratedNever();
             
             //modelBuilder.Entity<Reading>()
             //.HasOne<JobOrder>(s => s.JobOrder)

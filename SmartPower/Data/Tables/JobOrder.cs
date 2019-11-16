@@ -16,6 +16,9 @@ namespace SmartPower.Data.Tables
         public Nullable<DateTime> EndDate { get; set; }
         public string MachineCode { get; set; }
         public decimal TotalLength { get; set; }
+        
+        public int? ReadingId { get; set; }
+        [ForeignKey("ReadingId")]
         public Reading Reading { get; set; }
 
     }

@@ -18,7 +18,9 @@ namespace SmartPower.Data.Tables
         public decimal Length { get; set; }
         public int status { get; set; }
         public DateTime time { get; set; }
-        public ICollection<JobOrder> jobOrders { get; set; }
+        
+        public ICollection<JobOrder> JobOrders { get; set; }
+
 
     }
 }

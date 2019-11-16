@@ -35,7 +35,7 @@ namespace SmartPower
             {
                 app.UseBrowserLink();
                 app.UseDeveloperExceptionPage();
-                DBInitializer.SeedJobOrders(app);
+                //DBInitializer.SeedJobOrders(app);
             }
             else
             {
