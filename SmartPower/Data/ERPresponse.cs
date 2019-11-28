@@ -7,8 +7,8 @@ namespace SmartPower.Data
 {
     public class ERPresponse
     {
-        public List<string> jobOrders { get; set; }
-        public string AccessToken { get; set; }
-        public string Status { get; set; }
+        public List<jobOrderResponse> jobOrders { get; set; }
+        public string statusCode { get; set; }
+        public string message { get; set; }
     }
 }

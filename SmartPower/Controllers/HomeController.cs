@@ -46,9 +46,11 @@ namespace SmartPower.Controllers
                 accessToken: "w489dkfn934809048293i09e22i03",
                 status: "Recieved"
                 }*/
-                ERPresponse ResponseInJSON = JsonConvert.DeserializeObject<ERPresponse>(response);
+                List <ERPresponse> ResponseInJSON = JsonConvert.DeserializeObject<List<ERPresponse>>(response);
             client.Dispose();
-            return ResponseInJSON.jobOrders;
+            ICollection<string> JobOrdersIds = new List<string> ();
+            ResponseInJSON.ForEach((j)=>j.jobOrders.ForEach((m=> JobOrdersIds.Add(m.jobOrderId))));
+            return JobOrdersIds;
             
         }
 
@@ -61,6 +63,8 @@ namespace SmartPower.Controllers
 
         public IActionResult Data()
         {
+           
+            
             //AddJobOrder(getJob("12"), "12");
             var model = DB.Reading.Where(d => d.status != 2).Include(d=>d.JobOrders).OrderByDescending(d => d.Id).ToList();
             //var jobs = DB.Reading.FirstOrDefault(r => r.MachineCode == "12").jobOrders.ToList();

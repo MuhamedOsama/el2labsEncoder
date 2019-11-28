@@ -56,30 +56,50 @@
                                 <thead>
                                     <tr>
                                         <th>Job Order</th>
-                                        <th>Machine Code</th>
-                                        <th>Total Length</th>
-                                        <th>Start </th>
-                                        <th>End</th>
+                                        @*<th>Machine Code</th>
+                <th>Total Length</th>*@
+                                        <th>Machines</th>
                                     </tr>
                                 </thead>
-                                @foreach (var item in Model)
+                                @foreach (var MachineJob in Model.GroupBy(m => m.JobOrderId))
                                 {
+                                    var JobReadings = Model.Where(i => i.JobOrderId == MachineJob.Key);
+                                    var Job = Model.FirstOrDefault(j => j.JobOrderId == MachineJob.Key);
                                     <tbody>
 
                                         <tr>
-                                            <td scope="row">@item.JobOrderId</td>
-                                            <td>@item.MachineCode</td>
-                                            <td>@item.TotalLength</td>
+                                            <td>@MachineJob.Key</td>
+                                            <td>
+                                                <div class="dropdown show">
+                                                    <a class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        Machines
+                                                    </a>
+                                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
 
 
-                                            <td>@item.StartDate</td>
-                                            <td>@item.EndDate</td>
-                                            
+                                                        @foreach (var read in JobReadings)
+                                                        {
+                                                            <span class="dropdown-item" hr id="MachineList"><b style="width:50%;" id="JobOrderItem"> Code: @read.MachineCode </b> <span>Length: @read.TotalLength</span></span>
+                                                        }
+
+
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            @*<td scope="row">@item.JobOrderId</td>
+                    <td>@item.MachineCode</td>
+                    <td>@item.TotalLength</td>
+
+
+                    <td>@item.StartDate</td>
+                    <td>@item.EndDate</td>*@
+
                                         </tr>
-
+                                        <tr>
+                                        </tr>
                                     </tbody>
-                                }
-                            </table>
+                                    }
+                                </table>
                         </div>
                     </div>
                 </div>
@@ -87,3 +107,25 @@
         </section>
     </div>
 </div>
+<style>
+    #JobOrderItem{
+            background-color:#eee;
+            color:black;
+            padding:10px;
+            border-radius:9px;
+            transition: all 0.3s;
+            margin-right: 10px;
+            text-overflow:ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        #JobOrderItem:hover{
+            background-color: #222;
+            color:white;
+        }
+        #MachineList{
+            display: flex;
+            align-items:center;
+        }
+
+</style>
