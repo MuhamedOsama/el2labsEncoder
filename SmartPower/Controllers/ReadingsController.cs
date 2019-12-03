@@ -32,60 +32,6 @@ namespace SmartPower.Controllers
             return _context.Readings;
         }
 
-        // GET: api/FutureReadings/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetFutureReading([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var futureReading = await _context.Readings.FindAsync(id);
-
-            if (futureReading == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(futureReading);
-        }
-
-        // PUT: api/FutureReadings/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFutureReading([FromRoute] int id, [FromBody] Reading futureReading)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != futureReading.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(futureReading).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!FutureReadingExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // Create New Reading "GET": api/FutureReadings
         // LineId is prefixed in pMC, example:
         // pMC: 56987, means lineId is 5 and machine code is 6987
@@ -96,7 +42,7 @@ namespace SmartPower.Controllers
             // return Ok((machinecode:  pMC, status:  pST, length: pLength));
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest();
             }
 
             char[] pMcArray = pMC.ToCharArray();
@@ -128,11 +74,11 @@ namespace SmartPower.Controllers
                     reading.PairId = erp.PairId;
                     _context.Readings.Add(reading);
                     await _context.SaveChangesAsync();
-                    return CreatedAtAction("GetFutureReading", new { id = reading.Id }, reading);
+                    return Ok("ok");
                 }
                 catch (Exception)
                 {
-                    return BadRequest("Reading not Created, Couldn't get \"Pair Id\" from ERP");
+                    return BadRequest();
                 }
 
 
@@ -153,18 +99,18 @@ namespace SmartPower.Controllers
                     reading.EndTime = DateTime.Now;
                     reading.Length = CurrentLength + pLength;
                     _context.SaveChanges();
-                    return Ok(new { Finishedreading = reading });
+                    return Ok("ok");
                 }
                 else
                 {
                     // a finished reading that has no prior record
-                    return BadRequest("Reading Never Had a Starting Record!");
+                    return BadRequest();
                 }
             }
             else
             {
                 // machine sent a status other than 1 "starting" or 0 "finished" somehow
-                return BadRequest("machine status and length is not true");
+                return BadRequest();
             }
         }
 
@@ -248,25 +194,6 @@ namespace SmartPower.Controllers
             }
 
         }
-
-
-
-
-
-
-        //// reading is pending and ready to be finished
-        //decimal CurrentLength = reading.Length;
-        //reading.Length = CurrentLength + pLength;
-        //reading.Assignment = 2;
-        //reading.EndTime = DateTime.Now;
-        //// create a copy for Log table
-
-        //// Add the finished reading to Reading Logs table "a table containing finished readings only"
-        //_context.ReadingsLogs.Add(FinishedReading);
-        //_context.Readings.Add(reading);
-        //_context.SaveChanges();
-        //return NoContent();
-
 
         private bool FutureReadingExists(int id)
         {
