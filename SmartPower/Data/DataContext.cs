@@ -14,9 +14,7 @@ namespace SmartPower.Data
         {
         }
 
-        public DbSet<Reading> Reading { get; set; }
-        public DbSet<JobOrder> jobOrders { get; set; }
-        public DbSet<FutureReading> futureReadings { get; set; }
+        public DbSet<Reading> Readings { get; set; }
         public DbSet<ReadingsLog> ReadingsLogs { get; set; }
         //public DbSet<Machine> machines { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -27,9 +25,6 @@ namespace SmartPower.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<JobOrder>()
-                .Property(p => p.ReadingId)
-                .ValueGeneratedNever();
             
             //modelBuilder.Entity<Reading>()
             //.HasOne<JobOrder>(s => s.JobOrder)
@@ -37,6 +32,5 @@ namespace SmartPower.Data
             //.HasForeignKey<JobOrder>(ad => ad.JobOrderId);
             
         }
-        public DbSet<SmartPower.Data.Tables.FutureReading> FutureReading { get; set; }
     }
 }

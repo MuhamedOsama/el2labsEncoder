@@ -14,12 +14,12 @@ namespace SmartPower.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FutureReadingsController : ControllerBase
+    public class ReadingsController : ControllerBase
     {
         private readonly DataContext _context;
         public readonly IHttpClientFactory _clientFactory;
 
-        public FutureReadingsController(DataContext context, IHttpClientFactory clientFactory)
+        public ReadingsController(DataContext context, IHttpClientFactory clientFactory)
         {
             _context = context;
             _clientFactory = clientFactory;
@@ -27,9 +27,9 @@ namespace SmartPower.Controllers
 
         // GET: api/FutureReadings
         [HttpGet]
-        public IEnumerable<FutureReading> GetFutureReading()
+        public IEnumerable<Reading> GetFutureReading()
         {
-            return _context.FutureReading;
+            return _context.Readings;
         }
 
         // GET: api/FutureReadings/5
@@ -41,7 +41,7 @@ namespace SmartPower.Controllers
                 return BadRequest(ModelState);
             }
 
-            var futureReading = await _context.FutureReading.FindAsync(id);
+            var futureReading = await _context.Readings.FindAsync(id);
 
             if (futureReading == null)
             {
@@ -53,7 +53,7 @@ namespace SmartPower.Controllers
 
         // PUT: api/FutureReadings/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutFutureReading([FromRoute] int id, [FromBody] FutureReading futureReading)
+        public async Task<IActionResult> PutFutureReading([FromRoute] int id, [FromBody] Reading futureReading)
         {
             if (!ModelState.IsValid)
             {
@@ -106,7 +106,7 @@ namespace SmartPower.Controllers
             {
                 // Starting
 
-                FutureReading reading = new FutureReading
+                Reading reading = new Reading
                 {
                     Assignment = 0, //free
                     StartTime = DateTime.Now,
@@ -126,7 +126,7 @@ namespace SmartPower.Controllers
                     dynamic erp = JObject.Parse(jsonArray[0].ToString());
                     // assign PairId to Reading r.PairId = response.pairId
                     reading.PairId = erp.PairId;
-                    _context.FutureReading.Add(reading);
+                    _context.Readings.Add(reading);
                     await _context.SaveChangesAsync();
                     return CreatedAtAction("GetFutureReading", new { id = reading.Id }, reading);
                 }
@@ -139,7 +139,7 @@ namespace SmartPower.Controllers
             }
             else if (pST == 0)
             {
-                FutureReading reading = _context.futureReadings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId);
+                Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId);
                 if (reading != null)
                 {
                     //  Check : Get Current Assignment from RFID ?
@@ -176,7 +176,7 @@ namespace SmartPower.Controllers
                         };
                         // Add the finished reading to Reading Logs table "a table containing finished readings only"
                         _context.ReadingsLogs.Add(FinishedReading);
-                        _context.futureReadings.Add(reading);
+                        _context.Readings.Add(reading);
                         _context.SaveChanges();
                         return NoContent();
                     }
@@ -219,7 +219,7 @@ namespace SmartPower.Controllers
             }
             else if (Flag == 2)
             {
-                FutureReading reading = _context.futureReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.Assignment == Flag);
+                Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.Assignment == Flag);
                 if (reading != null)
                 {
                     return Ok(reading);
@@ -237,7 +237,7 @@ namespace SmartPower.Controllers
 
         private bool FutureReadingExists(int id)
         {
-            return _context.FutureReading.Any(e => e.Id == id);
+            return _context.Readings.Any(e => e.Id == id);
         }
     }
 }

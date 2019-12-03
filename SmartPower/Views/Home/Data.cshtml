@@ -59,8 +59,8 @@
                                         <th>Machine Code</th>
                                         <th>Length</th>
                                         <th>Status</th>
-                                        <th>Time</th>
-                                        <th>Job Order</th>
+                                        <th>Start Time</th>
+                                        @*<th>Job Order</th>*@
 
                                     </tr>
                                 </thead>
@@ -69,10 +69,10 @@
                                     <tbody>
                                         <tr>
                                             <td scope="row">@item.Id</td>
-                                            <td>@item.MachineCode</td>
+                                            <td>@item.MachineId</td>
                                             <td>@item.Length</td>
 
-                                            @if (item.status == 1)
+                                            @if (item.Status == 1)
                                             {
 
                                                 <td>in progress</td>
@@ -82,8 +82,8 @@
                                                 <td>complete</td>
 
                                             }
-                                            <td>@item.time</td>
-                                            <th>
+                                            <td>@item.StartTime</td>
+                                            @*<th>
                                                 @if (item.JobOrders.Count()!=0)
                                                 {
                                                     <div class="dropdown show">
@@ -100,7 +100,7 @@
                                                         </div>
                                                     </div>
                                                 }
-                                            </th>
+                                            </th>*@
 
                                         </tr>
 

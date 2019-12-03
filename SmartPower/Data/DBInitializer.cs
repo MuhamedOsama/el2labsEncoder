@@ -17,19 +17,19 @@ namespace SmartPower.Data
             {
                 DataContext context = serviceScope.ServiceProvider.GetService<DataContext>();
 
-                if (!context.Reading.Any())
-                {
-                    Reading r1 = new Reading()
-                    {
-                        MachineCode = "12",
-                        Length = 0,
-                        status = 1,
-                        time = DateTime.Now,
-                    };
-                    context.Reading.Add(r1);
-                }
+                //if (!context.Reading.Any())
+                //{
+                //    Reading r1 = new Reading()
+                //    {
+                //        MachineCode = "12",
+                //        Length = 0,
+                //        status = 1,
+                //        time = DateTime.Now,
+                //    };
+                //    context.Reading.Add(r1);
+                //}
 
-                context.SaveChanges();
+                //context.SaveChanges();
             }
 
         }
