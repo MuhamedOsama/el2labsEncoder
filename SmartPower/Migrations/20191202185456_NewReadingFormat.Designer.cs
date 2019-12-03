@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SmartPower.Data;
 
 namespace SmartPower.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20191202185456_NewReadingFormat")]
+    partial class NewReadingFormat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,33 +90,6 @@ namespace SmartPower.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Reading");
-                });
-
-            modelBuilder.Entity("SmartPower.Data.Tables.ReadingsLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<short>("Assignment");
-
-                    b.Property<DateTime>("EndTime");
-
-                    b.Property<decimal>("Length");
-
-                    b.Property<int>("LineId");
-
-                    b.Property<string>("MachineId");
-
-                    b.Property<string>("PairId");
-
-                    b.Property<DateTime>("StartTime");
-
-                    b.Property<short>("Status");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReadingsLogs");
                 });
 
             modelBuilder.Entity("SmartPower.Data.Tables.JobOrder", b =>

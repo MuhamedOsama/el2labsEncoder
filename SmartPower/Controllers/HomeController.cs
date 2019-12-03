@@ -13,6 +13,7 @@ using RestSharp;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SmartPower.Controllers
 {
@@ -34,24 +35,24 @@ namespace SmartPower.Controllers
                 //get list of job orders from erp for that machine
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get,
-               "https://localhost:44368/api/encoderlogs/Response");
-                var response = client.GetAsync("https://localhost:44368/api/encoderlogs/Response").Result.Content.ReadAsStringAsync().Result;
-                //the structure of the incoming json response:
-                /*{
-                jobOrders: [
-                    12,
-                    32,
-                    25
-                ],
-                accessToken: "w489dkfn934809048293i09e22i03",
-                status: "Recieved"
-                }*/
-                List <ERPresponse> ResponseInJSON = JsonConvert.DeserializeObject<List<ERPresponse>>(response);
+               "http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/f2");
+                var response = client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/f2").Result.Content.ReadAsStringAsync().Result;
+            //the structure of the incoming json response:
+            /*{
+            jobOrders: [
+                12,
+                32,
+                25
+            ],
+            accessToken: "w489dkfn934809048293i09e22i03",
+            status: "Recieved"
+            }*/
+            List<ERPresponse> ResponseInJSON = JsonConvert.DeserializeObject<List<ERPresponse>>(response);
             client.Dispose();
-            ICollection<string> JobOrdersIds = new List<string> ();
-            ResponseInJSON.ForEach((j)=>j.jobOrders.ForEach((m=> JobOrdersIds.Add(m.jobOrderId))));
+            ICollection<string> JobOrdersIds = new List<string>();
+            ResponseInJSON.ForEach((j) => j.jobOrders.ForEach((m => JobOrdersIds.Add(m.jobOrderId))));
             return JobOrdersIds;
-            
+
         }
 
 
@@ -77,7 +78,7 @@ namespace SmartPower.Controllers
             return View(model);
         }
 
-        public async System.Threading.Tasks.Task<string> Update()
+        public async Task<string> Update()
         {
             var query = HttpContext.Request.Query;
             var values = query.Where(o => o.Key.StartsWith("p")).ToDictionary(o => o.Key);

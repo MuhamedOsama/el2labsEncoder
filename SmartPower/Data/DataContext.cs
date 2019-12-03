@@ -16,6 +16,8 @@ namespace SmartPower.Data
 
         public DbSet<Reading> Reading { get; set; }
         public DbSet<JobOrder> jobOrders { get; set; }
+        public DbSet<FutureReading> futureReadings { get; set; }
+        public DbSet<ReadingsLog> ReadingsLogs { get; set; }
         //public DbSet<Machine> machines { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -35,5 +37,6 @@ namespace SmartPower.Data
             //.HasForeignKey<JobOrder>(ad => ad.JobOrderId);
             
         }
+        public DbSet<SmartPower.Data.Tables.FutureReading> FutureReading { get; set; }
     }
 }

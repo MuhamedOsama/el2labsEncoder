@@ -26,6 +26,7 @@ namespace SmartPower
         {
             services.AddMvc();
             services.AddDbContext<DataContext>(p => p.UseSqlServer(Configuration.GetConnectionString("defult")));
+            services.AddHttpClient();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
