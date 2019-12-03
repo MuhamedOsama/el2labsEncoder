@@ -26,47 +26,8 @@ namespace SmartPower.Controllers
 
             this.DB = dataContext;
         }
-
-        public ICollection<string> getJob(string mc)
-        {
-            
-
-            
-                //get list of job orders from erp for that machine
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get,
-               "http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/f2");
-                var response = client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/f2").Result.Content.ReadAsStringAsync().Result;
-            //the structure of the incoming json response:
-            /*{
-            jobOrders: [
-                12,
-                32,
-                25
-            ],
-            accessToken: "w489dkfn934809048293i09e22i03",
-            status: "Recieved"
-            }*/
-            List<ERPresponse> ResponseInJSON = JsonConvert.DeserializeObject<List<ERPresponse>>(response);
-            client.Dispose();
-            ICollection<string> JobOrdersIds = new List<string>();
-            ResponseInJSON.ForEach((j) => j.jobOrders.ForEach((m => JobOrdersIds.Add(m.jobOrderId))));
-            return JobOrdersIds;
-
-        }
-
-
-        //public ICollection<JobOrder> GetJobOrderFromEncoder(string id)
-        //{
-        //    var model = DB.jobOrders.Where(m => m.MachineCode == id).ToList();
-        //    return model;
-        //}
-
         public IActionResult Data()
         {
-
-
-            //AddJobOrder(getJob("12"), "12");
             var model = DB.Readings.Where(d => d.Assignment != 2).OrderByDescending(o => o.StartTime).ToList();
             return View(model);
         }
