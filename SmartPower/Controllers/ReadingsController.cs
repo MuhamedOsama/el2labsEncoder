@@ -102,7 +102,7 @@ namespace SmartPower.Controllers
             char[] pMcArray = pMC.ToCharArray();
             int LineId = int.Parse(pMC.Substring(0, 1));
             string MachineId = pMC.Substring(1, pMcArray.Length - 1);
-            if (pST == 1)
+            if (pST == 1 && pLength == 0)
             {
                 // Starting
 
@@ -118,7 +118,7 @@ namespace SmartPower.Controllers
                 };
                 // request (await) pairId from erp by sending (MachineCode, LineId)
                 HttpClient client = _clientFactory.CreateClient();
-                HttpResponseMessage request = await client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/f2");
+                HttpResponseMessage request = await client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/PairID");
                 try
                 {
                     string json = await request.Content.ReadAsStringAsync();
@@ -137,103 +137,136 @@ namespace SmartPower.Controllers
 
 
             }
-            else if (pST == 0)
+            else if (pST == 0 && pLength != 0)
             {
-                Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId);
+                Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment!=1);
                 if (reading != null)
                 {
                     //  Check : Get Current Assignment from RFID ?
                     //  Check : Accumulate into one reading at runtime or create new reading for each signal ? 
-                    if (reading.Assignment == 0)
-                    {
-                        // this means machine stopped and a reading
-                        // already exists but is not finished yet (due to PowerOutput, StandBy, etc..),
-                        // so we update it's already existing length
-                        decimal CurrentLength = reading.Length;
-                        reading.Length = CurrentLength + pLength;
-                        _context.SaveChanges();
-                        return NoContent();
-                    }
-                    else if (reading.Assignment == 1)
-                    {
-                        // reading is pending and ready to be finished
-                        decimal CurrentLength = reading.Length;
-                        reading.Length = CurrentLength + pLength;
-                        reading.Assignment = 2;
-                        reading.EndTime = DateTime.Now;
-                        // create a copy for Log table
-                        ReadingsLog FinishedReading = new ReadingsLog
-                        {
-                            MachineId = reading.MachineId,
-                            Length = reading.Length,
-                            Status = reading.Status,
-                            LineId = reading.LineId,
-                            PairId = reading.PairId,
-                            StartTime = reading.StartTime,
-                            EndTime = reading.EndTime,
-                            Assignment = reading.Assignment
 
-                        };
-                        // Add the finished reading to Reading Logs table "a table containing finished readings only"
-                        _context.ReadingsLogs.Add(FinishedReading);
-                        _context.Readings.Add(reading);
-                        _context.SaveChanges();
-                        return NoContent();
-                    }
-
+                    // this means machine stopped and a reading
+                    // already exists but is not finished yet (due to PowerOutput, StandBy, etc..),
+                    // so we update it's already existing length
+                    decimal CurrentLength = reading.Length;
+                    reading.Status = pST;
+                    reading.EndTime = DateTime.Now;
+                    reading.Length = CurrentLength + pLength;
+                    _context.SaveChanges();
+                    return Ok(new { Finishedreading = reading });
                 }
                 else
                 {
                     // a finished reading that has no prior record
                     return BadRequest("Reading Never Had a Starting Record!");
                 }
-                return Ok(reading);
             }
             else
             {
                 // machine sent a status other than 1 "starting" or 0 "finished" somehow
-                return BadRequest("machine status is not recognized");
+                return BadRequest("machine status and length is not true");
             }
         }
 
         [HttpGet]
         [Route("length")]
-        public IActionResult Length([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] string LineId, [FromQuery] short Flag)
+        public IActionResult Length([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
-            if (!ModelState.IsValid)
+
+            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment!=1);
+            if (reading != null)
             {
-                return BadRequest(ModelState);
-            }
-            if (Flag == 2)
-            {
-                ReadingsLog reading = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.Assignment == Flag);
-                if (reading != null)
+                ReadingsLog log = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                if (log == null)
                 {
-                    return Ok(reading);
+                    if (reading.Assignment == 0)
+                    {
+                        reading.Assignment = 1;
+                        reading.LastRequest = DateTime.Now;
+                        _context.SaveChanges();
+                        return Ok(reading);
+                        //reading.Assignment = 1; //pending
+                        //return Ok(reading);
+                    }
+                    else
+                    {
+                        TimeSpan diff = DateTime.Now - reading.LastRequest;
+                        if (diff.TotalMinutes > 15)
+                        {
+                            reading.Assignment = 0;
+                            _context.SaveChanges();
+                            return Ok(reading);
+                        }
+                        else
+                        {
+                            return Ok(reading);
+                        }
+                    }
                 }
                 else
                 {
-                    return NotFound("reading doesn't exist!");
+                    ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                    return Ok(finished);
                 }
 
             }
-            else if (Flag == 2)
+            else
             {
-                Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.Assignment == Flag);
-                if (reading != null)
+                return NotFound("reading doesn't exist!");
+            }
+        }
+        [HttpGet]
+        [Route("confirmerp")]
+        public IActionResult ConfirmERP([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
+        {
+            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+            if (reading.Assignment == 1)
+            {
+                reading.Assignment = 2;
+                reading.LastRequest = DateTime.Now;
+                ReadingsLog FinishedReading = new ReadingsLog
                 {
-                    return Ok(reading);
-                }
-                else
-                {
-                    return NotFound("reading doesn't exist!");
-                }
+                    MachineId = reading.MachineId,
+                    Length = reading.Length,
+                    Status = reading.Status,
+                    LineId = reading.LineId,
+                    PairId = reading.PairId,
+                    StartTime = reading.StartTime,
+                    EndTime = reading.EndTime,
+                    Assignment = reading.Assignment
+                };
+
+                _context.ReadingsLogs.Add(FinishedReading);
+                _context.Readings.Remove(reading);
+                _context.SaveChanges();
+                return Ok(FinishedReading);
+
             }
             else
             {
-                return BadRequest("parameter \"flag\" is invalid");
+                return Ok(reading);
             }
+
         }
+
+
+
+
+
+
+        //// reading is pending and ready to be finished
+        //decimal CurrentLength = reading.Length;
+        //reading.Length = CurrentLength + pLength;
+        //reading.Assignment = 2;
+        //reading.EndTime = DateTime.Now;
+        //// create a copy for Log table
+
+        //// Add the finished reading to Reading Logs table "a table containing finished readings only"
+        //_context.ReadingsLogs.Add(FinishedReading);
+        //_context.Readings.Add(reading);
+        //_context.SaveChanges();
+        //return NoContent();
+
 
         private bool FutureReadingExists(int id)
         {

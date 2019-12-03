@@ -15,8 +15,10 @@ namespace SmartPower.Data.Tables
         public int LineId { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+        public DateTime LastRequest { get; set; }
         public decimal Length { get; set; }
         public short Status { get; set; }
         public short Assignment { get; set; }
+
     }
 }

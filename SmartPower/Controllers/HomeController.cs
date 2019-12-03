@@ -28,7 +28,7 @@ namespace SmartPower.Controllers
         }
         public IActionResult Data()
         {
-            var model = DB.Readings.Where(d => d.Assignment != 2).OrderByDescending(o => o.StartTime).ToList();
+            var model = DB.ReadingsLogs.OrderByDescending(o => o.StartTime).ToList();
             return View(model);
         }
 
