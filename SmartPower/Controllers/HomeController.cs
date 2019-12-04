@@ -190,7 +190,7 @@ namespace SmartPower.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetLength([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
+        public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
 
             Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment != 1);
@@ -204,7 +204,10 @@ namespace SmartPower.Controllers
                         reading.Assignment = 1;
                         reading.LastRequest = DateTime.Now;
                         _context.SaveChanges();
-                        return Ok(reading);
+                        dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
+                        dynamic list = new List<dynamic>() { response};
+
+                        return Ok(list);
                         //reading.Assignment = 1; //pending
                         //return Ok(reading);
                     }
@@ -215,18 +218,27 @@ namespace SmartPower.Controllers
                         {
                             reading.Assignment = 0;
                             _context.SaveChanges();
-                            return Ok(reading);
+                            dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
+                            dynamic list = new List<dynamic>() { response };
+
+                            return Ok(list);
                         }
                         else
                         {
-                            return Ok(reading);
+                            dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
+                            dynamic list = new List<dynamic>() { response };
+
+                            return Ok(list);
                         }
                     }
                 }
                 else
                 {
                     ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                    return Ok(finished);
+                    dynamic response = new { length = finished.Length, Message = "Success", statusCode = "OK" };
+                    dynamic list = new List<dynamic>() { response };
+
+                    return Ok(list);
                 }
 
             }
@@ -239,7 +251,7 @@ namespace SmartPower.Controllers
         public IActionResult ConfirmERP([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
         {
             Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-            if (reading.Assignment == 1)
+            if (reading.Assignment == 1 || reading.Assignment == 0) // will he confirm after reading or confirm instantly
             {
                 reading.Assignment = 2;
                 reading.LastRequest = DateTime.Now;
@@ -258,12 +270,19 @@ namespace SmartPower.Controllers
                 _context.ReadingsLogs.Add(FinishedReading);
                 _context.Readings.Remove(reading);
                 _context.SaveChanges();
-                return Ok(FinishedReading);
+                ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                dynamic response = new {Message = "Success", statusCode = "OK"};
+                dynamic list = new List<dynamic>() { response };
+
+                return Ok(list);
 
             }
             else
             {
-                return Ok(reading);
+                dynamic response = new { Message = "Success", statusCode = "OK" };
+                dynamic list = new List<dynamic>() { response };
+
+                return Ok(list);
             }
 
         }

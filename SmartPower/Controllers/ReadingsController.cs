@@ -27,9 +27,9 @@ namespace SmartPower.Controllers
 
         // GET: api/FutureReadings
         [HttpGet]
-        public IEnumerable<Reading> GetFutureReading()
+        public ActionResult GetFutureReading()
         {
-            return _context.Readings;
+            return Ok(_context.Readings.ToList());
         }
 
         // Create New Reading "GET": api/FutureReadings
