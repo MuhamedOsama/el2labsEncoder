@@ -51,12 +51,12 @@ namespace SmartPower.Controllers
         // LineId is prefixed in pMC, example:
         // pMC: 56987, means lineId is 5 and machine code is 6987
         [HttpGet]
-        public async Task<IActionResult> Update([FromQuery] string pMC, [FromQuery] short pST, [FromQuery] decimal pLength)
+        public async Task<string> Update([FromQuery] string pMC, [FromQuery] short pST, [FromQuery] decimal pLength)
         {
             // return Ok((machinecode:  pMC, status:  pST, length: pLength));
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return $"ok";
             }
 
             char[] pMcArray = pMC.ToCharArray();
@@ -88,11 +88,11 @@ namespace SmartPower.Controllers
                     reading.PairId = erp.PairId;
                     _context.Readings.Add(reading);
                     await _context.SaveChangesAsync();
-                    return Ok("ok");
+                    return $"ok";
                 }
                 catch (Exception)
                 {
-                    return BadRequest();
+                    return $"ok";
                 }
 
 
@@ -113,18 +113,18 @@ namespace SmartPower.Controllers
                     reading.EndTime = DateTime.Now;
                     reading.Length = CurrentLength + pLength;
                     _context.SaveChanges();
-                    return Ok("ok");
+                    return $"ok";
                 }
                 else
                 {
                     // a finished reading that has no prior record
-                    return BadRequest();
+                    return $"ok";
                 }
             }
             else
             {
                 // machine sent a status other than 1 "starting" or 0 "finished" somehow
-                return BadRequest();
+                return $"ok";
             }
         }
 
