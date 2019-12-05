@@ -190,7 +190,7 @@ namespace SmartPower.Controllers
         public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
         {
             Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-            if (reading.Assignment == 1 || reading.Assignment == 0) // will he confirm after reading or confirm instantly
+            if (reading.Assignment == 1) // will he confirm after reading or confirm instantly
             {
                 reading.Assignment = 2;
                 reading.LastRequest = DateTime.Now;
