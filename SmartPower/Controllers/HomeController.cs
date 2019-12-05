@@ -62,42 +62,8 @@ namespace SmartPower.Controllers
             char[] pMcArray = pMC.ToCharArray();
             int LineId = int.Parse(pMC.Substring(0, 1));
             string MachineId = pMC.Substring(1, pMcArray.Length - 1);
-            if (pST == 1 && pLength == 0)
-            {
-                // Starting
-
-                Reading reading = new Reading
-                {
-                    Assignment = 0, //free
-                    StartTime = DateTime.Now,
-                    Length = pLength,
-                    MachineId = MachineId,
-                    LineId = LineId,
-                    Status = pST,
-
-                };
-                // request (await) pairId from erp by sending (MachineCode, LineId)
-                HttpClient client = _clientFactory.CreateClient();
-                HttpResponseMessage request = await client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/PairID");
-                try
-                {
-                    string json = await request.Content.ReadAsStringAsync();
-                    JArray jsonArray = JArray.Parse(json);
-                    dynamic erp = JObject.Parse(jsonArray[0].ToString());
-                    // assign PairId to Reading r.PairId = response.pairId
-                    reading.PairId = erp.PairId;
-                    _context.Readings.Add(reading);
-                    await _context.SaveChangesAsync();
-                    return $"ok";
-                }
-                catch (Exception)
-                {
-                    return $"ok";
-                }
-
-
-            }
-            else if (pST == 0 && pLength != 0)
+            
+            if (pST == 0 && pLength != 0)
             {
                 Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment != 1);
                 if (reading != null)
@@ -117,13 +83,39 @@ namespace SmartPower.Controllers
                 }
                 else
                 {
-                    // a finished reading that has no prior record
-                    return $"ok";
+                    Reading newReading = new Reading
+                    {
+                        Assignment = 0, //free
+                        StartTime = DateTime.Now,
+                        Length = pLength,
+                        MachineId = MachineId,
+                        LineId = LineId,
+                        Status = pST,
+
+                    };
+                    // request (await) pairId from erp by sending (MachineCode, LineId)
+                    HttpClient client = _clientFactory.CreateClient();
+                    HttpResponseMessage request = await client.GetAsync("http://5dcd4ed5d795470014e4cf5f.mockapi.io/erp/PairID");
+                    try
+                    {
+                        string json = await request.Content.ReadAsStringAsync();
+                        JArray jsonArray = JArray.Parse(json);
+                        dynamic erp = JObject.Parse(jsonArray[0].ToString());
+                        // assign PairId to Reading r.PairId = response.pairId
+                        newReading.PairId = erp.PairId;
+                        _context.Readings.Add(newReading);
+                        await _context.SaveChangesAsync();
+                        return $"ok";
+                    }
+                    catch (Exception)
+                    {
+                        return $"ok";
+                    }
                 }
             }
             else
             {
-                // machine sent a status other than 1 "starting" or 0 "finished" somehow
+                // machine sent a status other than 0 "finished" somehow
                 return $"ok";
             }
         }
