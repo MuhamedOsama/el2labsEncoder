@@ -14,8 +14,9 @@ namespace SmartPower.Data
         {
         }
 
-        public DbSet<Reading> Readings { get; set; }
-        public DbSet<ReadingsLog> ReadingsLogs { get; set; }
+        public DbSet<Reading> LengthReadings { get; set; }
+        public DbSet<ReadingsLog> LengthReadingsLogs { get; set; }
+        //public DbSet<UserTokens> CacheTokens { get; set; }
         //public DbSet<Machine> machines { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
