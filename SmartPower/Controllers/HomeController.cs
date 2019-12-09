@@ -36,6 +36,11 @@ namespace SmartPower.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public ActionResult Readings()
+        {
+            return Ok(_context.LengthReadings.ToList());
+        }
 
         public IActionResult Index()
         {
@@ -63,9 +68,6 @@ namespace SmartPower.Controllers
                 Reading reading = _context.LengthReadings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment != 1);
                 if (reading!=null)
                 {
-                    //  Check : Get Current Assignment from RFID ?
-                    //  Check : Accumulate into one reading at runtime or create new reading for each signal ? 
-
                     // this means machine stopped and a reading
                     // already exists but is not finished yet (due to PowerOutput, StandBy, etc..),
                     // so we update it's already existing length
@@ -105,7 +107,6 @@ namespace SmartPower.Controllers
                         JObject TokenResponse = JObject.Parse(await tokenRequest.Content.ReadAsStringAsync());
                         dynamic token = TokenResponse["access_token"];
                         DateTime expiration = (DateTime)TokenResponse[".expires"];
-                        //Console.WriteLine("EEEEEEEEEEE" + expiration.Minute);
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", " " + (String)token);
                         client.DefaultRequestHeaders.Add("uid", "1");
                         var json = await client.GetAsync("http://10.1.10.56:9090/api/v1/pairingout/GetPairingSummary");
@@ -123,9 +124,9 @@ namespace SmartPower.Controllers
                         
                         return $"ok";
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        return e.Message;
+                        return $"ok";
                     }
                 }
             }
@@ -143,9 +144,7 @@ namespace SmartPower.Controllers
             Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment != 2);
             if (reading != null)
             {
-                ReadingsLog log = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                if (log == null)
-                {
+               
                     if (reading.Assignment == 0)
                     {
                         reading.Assignment = 1;
@@ -153,7 +152,6 @@ namespace SmartPower.Controllers
                         _context.SaveChanges();
                         dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
                         dynamic list = new List<dynamic>() { response};
-
                         return Ok(list);
                         //reading.Assignment = 1; //pending
                         //return Ok(reading);
@@ -167,38 +165,26 @@ namespace SmartPower.Controllers
                             _context.SaveChanges();
                             dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
                             dynamic list = new List<dynamic>() { response };
-
                             return Ok(list);
                         }
                         else
                         {
                             dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
                             dynamic list = new List<dynamic>() { response };
-
                             return Ok(list);
                         }
                     }
-                }
-                else
-                {
-                    ReadingsLog finished = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                    dynamic response = new { length = finished.Length, Message = "Success", statusCode = "OK" };
-                    dynamic list = new List<dynamic>() { response };
-
-                    return Ok(list);
-                }
 
             }
             else
             {
                 dynamic response = new { Message = "Failed", statusCode = "ERROR" };
                 dynamic list = new List<dynamic>() { response };
-
                 return Ok(list);
             }
         }
         [HttpGet]
-        public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
+        public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
             Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
             if (reading.Assignment == 1) // will he confirm after reading or confirm instantly
