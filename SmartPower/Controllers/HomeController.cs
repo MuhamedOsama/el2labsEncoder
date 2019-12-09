@@ -31,7 +31,7 @@ namespace SmartPower.Controllers
         }
         public IActionResult Data()
         {
-            var model = _context.ReadingsLogs.OrderByDescending(o => o.StartTime).ToList();
+            var model = _context.LengthReadingsLogs.OrderByDescending(o => o.StartTime).ToList();
             return View(model);
         }
 
@@ -44,7 +44,7 @@ namespace SmartPower.Controllers
         [HttpGet]
         public IEnumerable<Reading> GetReadings()
         {
-            return _context.Readings;
+            return _context.LengthReadings;
         }
 
         // Create New Reading "GET": api/FutureReadings
@@ -65,7 +65,7 @@ namespace SmartPower.Controllers
             
             if (pST == 0 && pLength != 0)
             {
-                Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment != 1);
+                Reading reading = _context.LengthReadings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment != 1);
                 if (reading != null)
                 {
                     //  Check : Get Current Assignment from RFID ?
@@ -103,7 +103,7 @@ namespace SmartPower.Controllers
                         dynamic erp = JObject.Parse(jsonArray[0].ToString());
                         // assign PairId to Reading r.PairId = response.pairId
                         newReading.PairId = erp.PairId;
-                        _context.Readings.Add(newReading);
+                        _context.LengthReadings.Add(newReading);
                         await _context.SaveChangesAsync();
                         return $"ok";
                     }
@@ -124,12 +124,10 @@ namespace SmartPower.Controllers
         public IActionResult GetLength([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
 
-            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment != 1);
+            Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment != 2);
             if (reading != null)
             {
-                ReadingsLog log = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                if (log == null)
-                {
+    
                     if (reading.Assignment == 0)
                     {
                         reading.Assignment = 1;
@@ -162,15 +160,8 @@ namespace SmartPower.Controllers
                             return Ok(list);
                         }
                     }
-                }
-                else
-                {
-                    ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                    dynamic response = new { length = finished.Length, Message = "Success", statusCode = "OK" };
-                    dynamic list = new List<dynamic>() { response };
-
-                    return Ok(list);
-                }
+                
+                
 
             }
             else
@@ -181,7 +172,7 @@ namespace SmartPower.Controllers
         [HttpGet]
         public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
         {
-            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+            Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
             if (reading.Assignment == 1) // will he confirm after reading or confirm instantly
             {
                 reading.Assignment = 2;
@@ -198,10 +189,10 @@ namespace SmartPower.Controllers
                     Assignment = reading.Assignment
                 };
 
-                _context.ReadingsLogs.Add(FinishedReading);
-                _context.Readings.Remove(reading);
+                _context.LengthReadingsLogs.Add(FinishedReading);
+                _context.LengthReadings.Remove(reading);
                 _context.SaveChanges();
-                ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                ReadingsLog finished = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
                 dynamic response = new {Message = "Success", statusCode = "OK"};
                 dynamic list = new List<dynamic>() { response };
 

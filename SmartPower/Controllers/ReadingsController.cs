@@ -29,7 +29,7 @@ namespace SmartPower.Controllers
         [HttpGet]
         public ActionResult GetFutureReading()
         {
-            return Ok(_context.Readings.ToList());
+            return Ok(_context.LengthReadings.ToList());
         }
 
         // Create New Reading "GET": api/FutureReadings
@@ -72,7 +72,7 @@ namespace SmartPower.Controllers
                     dynamic erp = JObject.Parse(jsonArray[0].ToString());
                     // assign PairId to Reading r.PairId = response.pairId
                     reading.PairId = erp.PairId;
-                    _context.Readings.Add(reading);
+                    _context.LengthReadings.Add(reading);
                     await _context.SaveChangesAsync();
                     return Ok("ok");
                 }
@@ -85,7 +85,7 @@ namespace SmartPower.Controllers
             }
             else if (pST == 0 && pLength != 0)
             {
-                Reading reading = _context.Readings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment!=1);
+                Reading reading = _context.LengthReadings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment!=1);
                 if (reading != null)
                 {
                     //  Check : Get Current Assignment from RFID ?
@@ -119,10 +119,10 @@ namespace SmartPower.Controllers
         public IActionResult Length([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
 
-            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment!=1);
+            Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0 && r.Assignment!=1);
             if (reading != null)
             {
-                ReadingsLog log = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                ReadingsLog log = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
                 if (log == null)
                 {
                     if (reading.Assignment == 0)
@@ -151,7 +151,7 @@ namespace SmartPower.Controllers
                 }
                 else
                 {
-                    ReadingsLog finished = _context.ReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                    ReadingsLog finished = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
                     return Ok(finished);
                 }
 
@@ -165,7 +165,7 @@ namespace SmartPower.Controllers
         [Route("confirmerp")]
         public IActionResult ConfirmERP([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId, [FromQuery] short Flag)
         {
-            Reading reading = _context.Readings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+            Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
             if (reading.Assignment == 1)
             {
                 reading.Assignment = 2;
@@ -182,8 +182,8 @@ namespace SmartPower.Controllers
                     Assignment = reading.Assignment
                 };
 
-                _context.ReadingsLogs.Add(FinishedReading);
-                _context.Readings.Remove(reading);
+                _context.LengthReadingsLogs.Add(FinishedReading);
+                _context.LengthReadings.Remove(reading);
                 _context.SaveChanges();
                 return Ok(FinishedReading);
 
@@ -197,7 +197,7 @@ namespace SmartPower.Controllers
 
         private bool FutureReadingExists(int id)
         {
-            return _context.Readings.Any(e => e.Id == id);
+            return _context.LengthReadings.Any(e => e.Id == id);
         }
     }
 }
