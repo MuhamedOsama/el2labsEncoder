@@ -38,7 +38,8 @@
             
                 <ul class="sidebar-menu list-unstyled">
                     @* <li class="sidebar-list-item"><a href="#" class="sidebar-link text-muted"><i class="o-home-1 mr-3 text-gray"></i><span>Power Dashboard</span></a></li>*@
-                    <li class="sidebar-list-item"><a href="/home/data" class="sidebar-link text-muted "><i class="o-table-content-1 mr-3 text-gray"></i><span>Encoder Table</span></a></li>
+                    <li class="sidebar-list-item"><a asp-action="Data" class="sidebar-link text-muted "><i class="o-table-content-1 mr-3 text-gray"></i><span>Encoder Logs</span></a></li>
+                    <li class="sidebar-list-item"><a asp-action="PendingData"class="sidebar-link text-muted "><i class="o-table-content-1 mr-3 text-gray"></i><span>Pending Readings</span></a></li>
                 </ul>
         </div>
        @RenderBody()

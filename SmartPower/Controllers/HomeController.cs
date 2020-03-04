@@ -3,15 +3,9 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using LG.Models;
-
-using Microsoft.Extensions.Configuration;
 using SmartPower.Data.Tables;
-using Microsoft.EntityFrameworkCore;
 using SmartPower.Data;
-using System.Net;
-using RestSharp;
 using System.Net.Http;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -30,6 +24,11 @@ namespace SmartPower.Controllers
             _context = dataContext;
             _clientFactory = clientFactory;
         }
+        public IActionResult PendingData()
+        {
+            var model = _context.LengthReadings.OrderByDescending(o => o.StartTime).ToList();
+            return View(model);
+        }
         public IActionResult Data()
         {
             var model = _context.LengthReadingsLogs.OrderByDescending(o => o.StartTime).ToList();
@@ -46,12 +45,6 @@ namespace SmartPower.Controllers
         {
             return RedirectToAction("Data");
         }
-        // GET: api/FutureReadings
-        [HttpGet]
-        public IEnumerable<Reading> GetReadings()
-        {
-            return _context.LengthReadings;
-        }
 
         // Create New Reading "GET": api/FutureReadings
         // LineId is prefixed in pMC, example:
@@ -59,9 +52,9 @@ namespace SmartPower.Controllers
         [HttpGet]
         public async Task<string> Update([FromQuery] string pMC, [FromQuery] short pST, [FromQuery] decimal pLength)
         {
-            char[] pMcArray = pMC.ToCharArray();
-            int LineId = int.Parse(pMC.Substring(0, 1));
-            string MachineId = pMC.Substring(1, pMcArray.Length - 1);
+
+            int LineId = int.Parse(pMC[pMC.Length-1].ToString());
+            string MachineId = pMC.Substring(0, pMC.Length - 2);
             
             if (pST == 0 && pLength != 0)
             {
@@ -108,7 +101,7 @@ namespace SmartPower.Controllers
                         dynamic token = TokenResponse["access_token"];
                         DateTime expiration = (DateTime)TokenResponse[".expires"];
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", " " + (String)token);
-                        client.DefaultRequestHeaders.Add("uid", "1");
+                        client.DefaultRequestHeaders.Add("uid", MachineId);
                         var json = await client.GetAsync("http://10.1.10.56:9090/api/v1/pairingout/GetPairingSummary");
                         
 
@@ -151,8 +144,7 @@ namespace SmartPower.Controllers
                         reading.LastRequest = DateTime.Now;
                         _context.SaveChanges();
                         dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
-                        dynamic list = new List<dynamic>() { response};
-                        return Ok(list);
+                        return Ok(response);
                         //reading.Assignment = 1; //pending
                         //return Ok(reading);
                     }
@@ -164,14 +156,12 @@ namespace SmartPower.Controllers
                             reading.Assignment = 0;
                             _context.SaveChanges();
                             dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
-                            dynamic list = new List<dynamic>() { response };
-                            return Ok(list);
+                            return Ok(response);
                         }
                         else
                         {
                             dynamic response = new { length = reading.Length, Message = "Success", statusCode = "OK" };
-                            dynamic list = new List<dynamic>() { response };
-                            return Ok(list);
+                            return Ok(response);
                         }
                     }
 
@@ -179,44 +169,53 @@ namespace SmartPower.Controllers
             else
             {
                 dynamic response = new { Message = "Failed", statusCode = "ERROR" };
-                dynamic list = new List<dynamic>() { response };
-                return Ok(list);
+                return Ok(response);
             }
         }
         [HttpGet]
         public IActionResult ConfirmFinished([FromQuery] string PairId, [FromQuery] string MachineId, [FromQuery] int LineId)
         {
             Reading reading = _context.LengthReadings.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-            if (reading.Assignment == 1) // will he confirm after reading or confirm instantly
+            if (reading != null)
             {
-                reading.Assignment = 2;
-                reading.LastRequest = DateTime.Now;
-                ReadingsLog FinishedReading = new ReadingsLog
+
+
+                if (reading.Assignment == 1) // will he confirm after reading or confirm instantly
                 {
-                    MachineId = reading.MachineId,
-                    Length = reading.Length,
-                    Status = reading.Status,
-                    LineId = reading.LineId,
-                    PairId = reading.PairId,
-                    StartTime = reading.StartTime,
-                    EndTime = reading.EndTime,
-                    Assignment = reading.Assignment
-                };
+                    reading.Assignment = 2;
+                    reading.LastRequest = DateTime.Now;
+                    ReadingsLog FinishedReading = new ReadingsLog
+                    {
+                        MachineId = reading.MachineId,
+                        Length = reading.Length,
+                        Status = reading.Status,
+                        LineId = reading.LineId,
+                        PairId = reading.PairId,
+                        StartTime = reading.StartTime,
+                        EndTime = reading.EndTime,
+                        Assignment = reading.Assignment
+                    };
 
-                _context.LengthReadingsLogs.Add(FinishedReading);
-                _context.LengthReadings.Remove(reading);
-                _context.SaveChanges();
-                ReadingsLog finished = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
-                dynamic response = new {Message = "Success", statusCode = "OK"};
-                dynamic list = new List<dynamic>() { response };
-                return Ok(list);
+                    _context.LengthReadingsLogs.Add(FinishedReading);
+                    _context.LengthReadings.Remove(reading);
+                    _context.SaveChanges();
+                    ReadingsLog finished = _context.LengthReadingsLogs.FirstOrDefault(r => r.PairId == PairId && r.MachineId == MachineId && r.LineId == LineId && r.Status == 0);
+                    dynamic response = new { Message = "Success", statusCode = "OK" };
+                    dynamic list = new List<dynamic>() { response };
+                    return Ok(list);
 
+                }
+                else
+                {
+                    dynamic response = new { Message = "Success", statusCode = "OK" };
+                    dynamic list = new List<dynamic>() { response };
+                    return Ok(list);
+                }
             }
             else
             {
-                dynamic response = new { Message = "Success", statusCode = "OK" };
-                dynamic list = new List<dynamic>() { response };
-                return Ok(list);
+                dynamic response = new { Message = "Failed", statusCode = "ERROR" };
+                return Ok(response);
             }
 
         }

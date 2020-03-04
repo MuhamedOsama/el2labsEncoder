@@ -25,7 +25,7 @@ namespace SmartPower
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddDbContext<DataContext>(p => p.UseSqlServer(Configuration.GetConnectionString("defult")));
+            services.AddDbContext<DataContext>(p => p.UseSqlServer(Configuration.GetConnectionString("default")));
             services.AddHttpClient();
         }
 
