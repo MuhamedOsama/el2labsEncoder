@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SmartPower.Data.Tables;
+using Encoder.Data.Tables;
 
 namespace SmartPower.Data
 {
@@ -15,6 +16,7 @@ namespace SmartPower.Data
         }
 
         public DbSet<Reading> LengthReadings { get; set; }
+        public DbSet<GenericReading> GenericReadings { get; set; }
         public DbSet<ReadingsLog> LengthReadingsLogs { get; set; }
         //public DbSet<UserTokens> CacheTokens { get; set; }
         //public DbSet<Machine> machines { get; set; }

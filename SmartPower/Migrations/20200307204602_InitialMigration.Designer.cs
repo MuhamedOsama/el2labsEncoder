@@ -7,19 +7,38 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SmartPower.Data;
 
-namespace SmartPower.Migrations
+namespace Encoder.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20191206153601_ChangedTablesNames")]
-    partial class ChangedTablesNames
+    [Migration("20200307204602_InitialMigration")]
+    partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.11-servicing-32099")
+                .HasAnnotation("ProductVersion", "2.1.14-servicing-32113")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("Encoder.Data.Tables.GenericReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<decimal>("Length");
+
+                    b.Property<int>("LineId");
+
+                    b.Property<string>("MachineId");
+
+                    b.Property<DateTime>("TimeStamp");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GenericReadings");
+                });
 
             modelBuilder.Entity("SmartPower.Data.Tables.Reading", b =>
                 {

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
+using Encoder.Data.Tables;
 
 namespace SmartPower.Controllers
 {
@@ -56,18 +57,62 @@ namespace SmartPower.Controllers
             int LineId = int.Parse(pMC[pMC.Length-1].ToString());
             string MachineId = pMC.Substring(0, pMC.Length - 2);
             
-            if (pST == 0 && pLength != 0)
+            if (pST == 0 && pLength > 50)
             {
+                GenericReading genericReading = new GenericReading
+                {
+                    Length = pLength,
+                    MachineId = MachineId,
+                    LineId = LineId,
+                    TimeStamp = DateTime.Now,
+                };
+                _context.GenericReadings.Add(genericReading);
+                await _context.SaveChangesAsync();
                 Reading reading = _context.LengthReadings.FirstOrDefault(r => r.MachineId == MachineId && r.LineId == LineId && r.Assignment != 2 && r.Assignment != 1);
                 if (reading!=null)
                 {
                     // this means machine stopped and a reading
                     // already exists but is not finished yet (due to PowerOutput, StandBy, etc..),
                     // so we update it's already existing length
-                    decimal CurrentLength = reading.Length;
-                    reading.Status = pST;
-                    reading.EndTime = DateTime.Now;
-                    reading.Length = CurrentLength + pLength;
+                    
+                    try
+                    {
+                        decimal CurrentLength = reading.Length;
+                        reading.Status = pST;
+                        reading.EndTime = DateTime.Now;
+                        reading.Length = CurrentLength + pLength;
+                        HttpClient client = _clientFactory.CreateClient();
+                        var data = new Dictionary<string, string>();
+                        data.Add("grant_type", "password");
+                        data.Add("username", "sbta");
+                        data.Add("password", "r4e3w2q1");
+                        var content = new FormUrlEncodedContent(data);
+                        HttpResponseMessage tokenRequest = await client.PostAsync("http://10.1.10.56:9090/api/v1/user/accessToken", content);
+                        //tokenRequest.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/x-www-form-urlencoded");
+                        JObject TokenResponse = JObject.Parse(await tokenRequest.Content.ReadAsStringAsync());
+                        dynamic token = TokenResponse["access_token"];
+                        DateTime expiration = (DateTime)TokenResponse[".expires"];
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", " " + (String)token);
+                        client.DefaultRequestHeaders.Add("uid", MachineId);
+                        var json = await client.GetAsync("http://10.1.10.56:9090/api/v1/pairingout/GetPairingSummary");
+
+
+                        var PairIdJson = await json.Content.ReadAsStringAsync();
+                        dynamic PairIdData = JObject.Parse(PairIdJson);
+                        if (PairIdData.statusCode == "OK")
+                        {
+                            //assign PairId to Reading r.PairId = response.pairId
+                            reading.PairId = PairIdData.pairingSummary.pairId;
+                            genericReading.PairId = PairIdData.pairingSummary.pairId;
+                            await _context.SaveChangesAsync();
+                        }
+
+                        return $"ok";
+                    }
+                    catch (Exception)
+                    {
+                        return $"ok";
+                    }
                     _context.SaveChanges();
                     return $"ok";
                 }
@@ -87,8 +132,7 @@ namespace SmartPower.Controllers
                     
                     //HttpResponseMessage request = await client.PostAsJsonAsync(Url, new { MachineId, LineId });
                     try
-                    {
-                        
+                    {   
                         HttpClient client = _clientFactory.CreateClient();
                         var data = new Dictionary<string, string>();
                         data.Add("grant_type", "password");
